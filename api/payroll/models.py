@@ -32,10 +32,13 @@ class Project(models.Model):
 
 class Employee(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    site = models.ForeignKey(Site, verbose_name="Employee's Site", on_delete=models.CASCADE)
     name = models.CharField(verbose_name="Employee Name", max_length=100)
     position = models.CharField(verbose_name="Employee's Postion", max_length=100)
     basic_rate = models.DecimalField(verbose_name="Employee's Basic Rate", max_digits=20, decimal_places=2)
+    site = models.ForeignKey(Site, verbose_name="Employee's Site", on_delete=models.CASCADE)
+    projects = ArrayField(
+                models.IntegerField(),
+            )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
     deleted_at = models.DateTimeField(null=True)
