@@ -19,4 +19,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('pms-api/', include('user.urls')),
+    path('pms-api/', include('payroll.urls')),
 ]
