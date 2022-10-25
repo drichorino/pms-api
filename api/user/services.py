@@ -6,6 +6,8 @@ from django.conf import settings
 from . import models
 from rest_framework import serializers
 
+from helper.response_helper import ResponseHelper
+
 if TYPE_CHECKING:
     from .models import User
 
@@ -45,7 +47,7 @@ def create_user(user_dc: "UserDataClass") -> "UserDataClass":
     )
     
     if models.User.objects.filter(email=user_dc.email).exists():        
-        raise serializers.ValidationError({"message" : "Email already exists."})    
+        raise serializers.ValidationError(ResponseHelper.failed("Email already exists."))
     
     if user_dc.password is not None:
         instance.set_password(user_dc.password)
