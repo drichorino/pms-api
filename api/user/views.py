@@ -7,18 +7,21 @@ from . import serializer as user_serializer
 from . import services, authentication
 from datetime import datetime
 
+from helper.response_helper import ResponseHelper
 
 @api_view(['POST'])
-@authentication_classes([authentication.CustomUserAuthentication])
-@permission_classes([permissions.IsAuthenticated])
+# @authentication_classes([authentication.CustomUserAuthentication])
+# @permission_classes([permissions.IsAuthenticated])
 def add_users(request):
     serializer = user_serializer.UserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
     data = serializer.validated_data
     serializer.instance = services.create_user(user_dc=data)   
-
-    return Response(serializer.data)
+    
+    response = ResponseHelper.response(serializer.data, "User is added successfully.")
+    
+    return Response(response, 201)
 
 
 @api_view(['POST'])
@@ -38,7 +41,8 @@ def login(request):
 
     resp = response.Response()
 
-    resp.set_cookie(key="jwt", value=token, httponly=True)
+    resp.set_cookie(key="jwt", value=token, httponly=True, samesite='None', secure='False')
+    #resp.set_cookie(key="jwt", value=token, httponly=True, samesite='None')
     resp.data = {"message": "Successfully logged in."}
 
     return resp
@@ -95,7 +99,7 @@ def list_archived_users(request):
 @api_view(['POST'])
 @authentication_classes([authentication.CustomUserAuthentication])
 @permission_classes([permissions.IsAuthenticated])
-def delete_user(request):
+def deactivate_user(request):
     
     data = request.data
         
@@ -155,7 +159,7 @@ def logout(request):
     
     
     resp = response.Response()
-    resp.delete_cookie("jwt")
+    resp.delete_cookie(key="jwt")
     resp.data = {"message": "Successfully logged out."}
 
     return resp
@@ -164,9 +168,42 @@ def logout(request):
 @api_view(['POST'])
 @authentication_classes([authentication.CustomUserAuthentication])
 @permission_classes([permissions.IsAuthenticated])
-def logout(request):
-    resp = response.Response()
-    resp.delete_cookie("jwt")
-    resp.data = {"message": "Successfully logged out."}
+def update_user(request):
+    
+    data = request.data
+    
+    id=data["id"]
+    
+    if data["password"] or data["confirm_password"]:
+        if data["password"] != data["confirm_password"]:            
+            
+            raise exceptions.ParseError({"message" : "Passwords do not match."})    
+    
+        user = User.objects.filter(id=id).first()        
+        user.set_password(data["password"])
+        user.save()                     
+        
+    
+    to_update = User.objects.filter(
+        id=id
+    ).update(
+        name = data["name"],
+        email = data["email"],
+        first_name = data["first_name"],
+        last_name = data["last_name"],
+        is_staff = data["is_staff"],
+        is_superuser = data["is_superuser"],
+        is_active = data["is_active"],
+        updated_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+    )
+        
+  
+    if to_update:
+        
+        user = User.objects.filter(id=id).first()
+        serializer = user_serializer.UserSerializer(user)
 
-    return resp
+        return Response(serializer.data)
+    else:
+        
+        raise exceptions.ParseError({"message" : "Failed to update user."})
