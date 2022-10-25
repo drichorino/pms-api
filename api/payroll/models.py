@@ -19,6 +19,7 @@ class Site(models.Model):
 class Project(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(verbose_name='Project Name', max_length=100, unique=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
     deleted_at = models.DateTimeField(null=True)
@@ -37,7 +38,7 @@ class Employee(models.Model):
     basic_rate = models.DecimalField(verbose_name="Employee's Basic Rate", max_digits=20, decimal_places=2)
     site = models.ForeignKey(Site, verbose_name="Employee's Site", on_delete=models.CASCADE)
     projects = ArrayField(
-                models.IntegerField(),
+                models.IntegerField(default=None),
             )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
