@@ -7,6 +7,8 @@ from user import authentication
 from .. models import Site
 from .. serializers import SiteSerializer
 
+from helper.response_helper import ResponseHelper
+
 
 @api_view(['POST'])
 def add_site(request):
@@ -19,10 +21,10 @@ def add_site(request):
     site = Site(name=site_name)
     
     try:
-        site.save()        
+        site.save()     
+        response = ResponseHelper.success(site_name, f"Site {site_name} is added successfully!")   
+        return Response(response, 202)
     except:
-        raise exceptions.ParseError({ "message" : f"Unable to add site, {site_name}."})
-    
-    return Response({ "message" : f"Site {site_name} is added successfully!"})
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add site, {site_name}."))
 
 

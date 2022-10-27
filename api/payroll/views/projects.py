@@ -9,6 +9,8 @@ from .. serializers import ProjectSerializer
 
 from datetime import datetime
 
+from helper.response_helper import ResponseHelper
+
 
 @api_view(['POST'])
 def add_project(request):
@@ -23,9 +25,9 @@ def add_project(request):
     try:
         project.save()        
     except:
-        raise exceptions.ParseError({ "message" : f"Unable to add project, {project_name}."})
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project, {project_name}."))
     
-    return Response({ "message" : f"Project {project_name} is added successfully!"})
+    return Response(ResponseHelper.success(data, f"Project {project_name} is added successfully!"))
 
 
 @api_view(['GET'])
@@ -40,10 +42,11 @@ def list_projects(request):
     # if there is something in items else raise error
     if projects:
         
-        return Response(serializer.data)
+        return Response(ResponseHelper.success(serializer.data, 'Active projects retrieved successfully!'))
+
     else:
 
-        raise exceptions.NotFound({"message" : "No active projects."})
+        raise exceptions.NotFound(ResponseHelper.failed("No active projects."))
     
     
 @api_view(['GET'])
@@ -58,10 +61,10 @@ def list_archived_projects(request):
     # if there is something in items else raise error
     if projects:
         
-        return Response(serializer.data)
+        return Response(ResponseHelper.success(serializer.data, 'Archived projects retrieved successfully!'))
     else:
 
-        raise exceptions.NotFound({"message" : "No archived projects."})
+        raise exceptions.NotFound(ResponseHelper.failed("No archived projects."))
     
     
 @api_view(['POST'])
@@ -88,12 +91,11 @@ def deactivate_project(request):
     
     if to_deactivate:     
         
-        response = { "message" : f"Project {project_name} has been successfully archived."}
-        
+        response = ResponseHelper.success(project_name, f"Project {project_name} has been successfully archived.")     
         return Response(response, status=202)
     
     else:
-        raise exceptions.ParseError({"message" : f"Project {project_name} cannot be found or is already archived."})
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project_name} cannot be found or is already archived."))
     
     
 @api_view(['POST'])
@@ -120,11 +122,11 @@ def restore_project(request):
     
     if to_activate:     
         
-        response = { "message" : f"Project {project_name} has been successfully re-activated."}
+        response = ResponseHelper.success(project_name, f"Project {project_name} has been successfully re-activated.")  
         
         return Response(response, status=202)
     
     else:
-        raise exceptions.ParseError({"message" : f"Project {project_name} cannot be found or is already activated."})
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project_name} cannot be found or is already activated."))
 
 

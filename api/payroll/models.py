@@ -6,7 +6,7 @@ class Site(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(verbose_name="Site Name", max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
 
     def __str__(self):
@@ -21,7 +21,7 @@ class Project(models.Model):
     name = models.CharField(verbose_name='Project Name', max_length=100, unique=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
 
     def __str__(self):
@@ -41,7 +41,7 @@ class Employee(models.Model):
                 models.IntegerField(default=None),
             )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
 
     def __str__(self):
@@ -58,7 +58,7 @@ class Payslip(models.Model):
                 models.DateField(),
             )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
             
     class Meta:
@@ -74,7 +74,7 @@ class DailyTimeRecord(models.Model):
                     models.IntegerField(verbose_name="DTR's Projects'")
                 )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
             
     class Meta:
