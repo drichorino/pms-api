@@ -19,8 +19,7 @@ def add_users(request):
     data = serializer.validated_data
     serializer.instance = services.create_user(user_dc=data)   
     
-    response = ResponseHelper.response(serializer.data, "User is added successfully.")
-    
+    response = ResponseHelper.success(serializer.data, "User is added successfully.")    
     return Response(response, 201)
 
 
@@ -32,17 +31,17 @@ def login(request):
     user = services.user_email_selector(email=email)
 
     if user is None:
-        raise exceptions.AuthenticationFailed({"message" : "Invalid credentials."})
+        raise exceptions.AuthenticationFailed(ResponseHelper.failed("Invalid credentials."))
 
     if not user.check_password(raw_password=password):
-        raise exceptions.AuthenticationFailed({"message" : "Invalid credentials."})
+        raise exceptions.AuthenticationFailed(ResponseHelper.failed("Invalid credentials."))
 
     token = services.create_token(user_id=user.id)
 
     resp = response.Response()
 
-    resp.set_cookie(key="jwt", value=token, httponly=True, samesite='None', secure='False')
-    #resp.set_cookie(key="jwt", value=token, httponly=True, samesite='None')
+    #resp.set_cookie(key="jwt", value=token, httponly=True, samesite='None', secure='False')
+    resp.set_cookie(key="jwt", value=token, httponly=True)
     resp.data = {"message": "Successfully logged in."}
 
     return resp
@@ -55,8 +54,9 @@ def current_user(request):
     user = request.user
 
     serializer = user_serializer.UserSerializer(user)
-
-    return response.Response(serializer.data)
+    
+    response = ResponseHelper.success(serializer.data, "User is retrieved successfully.")
+    return Response(response)
 
 
 @api_view(['GET'])
@@ -71,10 +71,12 @@ def list_users(request):
     # if there is something in items else raise error
     if users:
         
-        return Response(serializer.data)
+        response = ResponseHelper.success(serializer.data, "Active users are retrieved successfully.")
+        return Response(response)
+        
     else:
 
-        raise exceptions.NotFound({"message" : "No active users."})
+        raise exceptions.NotFoundresponse(ResponseHelper.failed("No active users."))
     
     
 @api_view(['GET'])
@@ -89,10 +91,11 @@ def list_archived_users(request):
     # if there is something in items else raise error
     if users:
         
-        return Response(serializer.data)
+        response = ResponseHelper.success(serializer.data, "Archived users are retrieved successfully.")
+        return Response(response)
     else:
 
-        raise exceptions.NotFound({"message" : "No archived users."})
+        raise exceptions.NotFound(ResponseHelper.failed("No archived users."))
   
 
 
@@ -116,12 +119,11 @@ def deactivate_user(request):
     
     if to_delete:     
         
-        response = { "message" : "Successfully deleted!"}
-        
-        return Response(response, status=202)
+        response = ResponseHelper.success(user_email, f"User account with email, {user_email} is successfully deactivated.")
+        return Response(response, 202)
     
     else:
-        raise exceptions.ParseError({"message" : "Invalid argument."})
+        raise exceptions.ParseError(ResponseHelper.failed("Invalid argument."))
     
 
 @api_view(['POST'])
@@ -144,12 +146,11 @@ def restore_user(request):
     
     if to_delete:     
         
-        response = { "message" : "Successfully restored!"}
-        
-        return Response(response, status=202)
+        response = ResponseHelper.success(user_email, f"User account with email, {user_email} is successfully activated.")
+        return Response(response, 202)
     
     else:
-        raise exceptions.ParseError({"message" : "Invalid argument."})
+        raise exceptions.ParseError(ResponseHelper.failed("Invalid argument."))
     
 
 @api_view(['POST'])
@@ -172,12 +173,12 @@ def update_user(request):
     
     data = request.data
     
-    id=data["id"]
-    
+    id=data["id"]    
+   
     if data["password"] or data["confirm_password"]:
-        if data["password"] != data["confirm_password"]:            
+        if data["password"] != data["confirm_password"]:
             
-            raise exceptions.ParseError({"message" : "Passwords do not match."})    
+            raise exceptions.ParseError(ResponseHelper.failed("Passwords do not match."))    
     
         user = User.objects.filter(id=id).first()        
         user.set_password(data["password"])
@@ -187,7 +188,6 @@ def update_user(request):
     to_update = User.objects.filter(
         id=id
     ).update(
-        name = data["name"],
         email = data["email"],
         first_name = data["first_name"],
         last_name = data["last_name"],
@@ -203,7 +203,8 @@ def update_user(request):
         user = User.objects.filter(id=id).first()
         serializer = user_serializer.UserSerializer(user)
 
-        return Response(serializer.data)
+        response = ResponseHelper.success(serializer.data, "User has been updated successfully!")
+        return Response(response, 202)
     else:
         
-        raise exceptions.ParseError({"message" : "Failed to update user."})
+        raise exceptions.ParseError(ResponseHelper.failed("Failed to update user."))
