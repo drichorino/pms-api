@@ -35,4 +35,20 @@ class DailyTimeRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = DailyTimeRecord
         fields = '__all__'
-        read_only_fields = ['id']      
+        read_only_fields = ['id']    
+        
+        
+        
+##### EDIT SERIALIZERS #####       
+        
+class EditSiteSerializer(serializers.ModelSerializer):     
+    class Meta:
+        model = Site
+        fields = ['name']   
+        read_only_fields = ['id']
+        
+class EditProjectSerializer(serializers.ModelSerializer):     
+    class Meta:
+        model = Project
+        fields = ['name']   
+        read_only_fields = ['id'] 
