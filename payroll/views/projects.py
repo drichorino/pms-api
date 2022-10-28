@@ -101,7 +101,7 @@ def restore_project(request):
     
     project = Project.objects.get(id=id)
     
-    if project.is_active == False:
+    if project.is_active == True:
         raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already reactivated."))
     
     data["name"] = project.name
