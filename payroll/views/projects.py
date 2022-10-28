@@ -5,29 +5,28 @@ from rest_framework import exceptions, permissions
 from user import authentication
 
 from .. models import Project
-from .. serializers import ProjectSerializer
+from .. serializers import ProjectSerializer, EditProjectSerializer
 
-from datetime import datetime
+from django.utils import timezone
 
 from helper.response_helper import ResponseHelper
 
 
 @api_view(['POST'])
 def add_project(request):
-    serializer = ProjectSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-
-    data = serializer.validated_data
     
+    data = request.data
     project_name = data["name"]
-    project = Project(name=project_name)
     
-    try:
-        project.save()        
-    except:
+    serializer = ProjectSerializer(data=data)
+    
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()  
+        response = ResponseHelper.success(data, f"Project {project_name} is added successfully!")
+        return Response(response, 202)
+        
+    else:
         raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project, {project_name}."))
-    
-    return Response(ResponseHelper.success(data, f"Project {project_name} is added successfully!"))
 
 
 @api_view(['GET'])
@@ -40,12 +39,9 @@ def list_projects(request):
     serializer = ProjectSerializer(projects, many=True)        
   
     # if there is something in items else raise error
-    if projects:
-        
+    if projects:        
         return Response(ResponseHelper.success(serializer.data, 'Active projects retrieved successfully!'))
-
     else:
-
         raise exceptions.NotFound(ResponseHelper.failed("No active projects."))
     
     
@@ -59,11 +55,9 @@ def list_archived_projects(request):
     serializer = ProjectSerializer(projects, many=True)
   
     # if there is something in items else raise error
-    if projects:
-        
+    if projects:        
         return Response(ResponseHelper.success(serializer.data, 'Archived projects retrieved successfully!'))
     else:
-
         raise exceptions.NotFound(ResponseHelper.failed("No archived projects."))
     
     
@@ -74,28 +68,26 @@ def deactivate_project(request):
     
     data = request.data
         
-    project_id = data["id"]
+    id = data["id"]
     
-    project = Project.objects.get(id=project_id)
-    serializer = ProjectSerializer(project)
-    project_name = serializer.data["name"]   
-     
-    to_deactivate = Project.objects.filter(
-        is_active=True,
-        id=project_id
-    ).update(
-        is_active=False,
-        updated_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        deleted_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-    )
+    project = Project.objects.get(id=id)
     
-    if to_deactivate:     
-        
-        response = ResponseHelper.success(project_name, f"Project {project_name} has been successfully archived.")     
-        return Response(response, status=202)
+    if project.is_active == False:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already deactivated."))
     
+    data["name"] = project.name
+    data["deleted_at"] = timezone.now()
+    data["is_active"] = False
+
+    serializer = ProjectSerializer(project, data=data)    
+       
+    if serializer.is_valid(raise_exception=False):
+        serializer.save()             
+        response = ResponseHelper.success(project.name, f"Project {project.name} has been successfully deactivated.") 
+            
+        return Response(response, status=202)    
     else:
-        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project_name} cannot be found or is already archived."))
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already deactivated.")) 
     
     
 @api_view(['POST'])
@@ -105,28 +97,50 @@ def restore_project(request):
     
     data = request.data
         
-    project_id = data["id"]
+    id = data["id"]
     
-    project = Project.objects.get(id=project_id)
-    serializer = ProjectSerializer(project)
-    project_name = serializer.data["name"]   
-     
-    to_activate = Project.objects.filter(
-        is_active=False,
-        id=project_id
-    ).update(
-        is_active=True,
-        updated_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        deleted_at = None
-    )
+    project = Project.objects.get(id=id)
     
-    if to_activate:     
-        
-        response = ResponseHelper.success(project_name, f"Project {project_name} has been successfully re-activated.")  
-        
-        return Response(response, status=202)
+    if project.is_active == False:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already reactivated."))
     
+    data["name"] = project.name
+    data["deleted_at"] = None
+    data["is_active"] = True
+
+    serializer = ProjectSerializer(project, data=data)    
+       
+    if serializer.is_valid(raise_exception=False):
+        serializer.save()             
+        response = ResponseHelper.success(project.name, f"Project {project.name} has been successfully reactivated.") 
+            
+        return Response(response, status=202)    
     else:
-        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project_name} cannot be found or is already activated."))
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already reactivated."))
+    
+    
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def edit_project(request):
+    
+    data = request.data
+        
+    id = data["id"]
+    
+    project = Project.objects.get(id=id)
+    
+    if project.is_active == False:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} is not active."))
+
+    serializer = EditProjectSerializer(project, data=data)
+       
+    if serializer.is_valid(raise_exception=False):
+        serializer.save()
+        response = ResponseHelper.success(project.name, "Project has been successfully updated!")
+            
+        return Response(response, status=202)
+    else:
+        raise exceptions.ParseError(ResponseHelper.failed("Failed to update project."))
 
 
