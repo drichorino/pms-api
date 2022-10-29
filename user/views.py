@@ -169,7 +169,7 @@ def logout(request):
 @api_view(['POST'])
 @authentication_classes([authentication.CustomUserAuthentication])
 @permission_classes([permissions.IsAuthenticated])
-def update_user(request):
+def edit_user(request):
     
     data = request.data
     
