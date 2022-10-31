@@ -20,12 +20,16 @@ def add_site(request):
     
     serializer = SiteSerializer(data=data)    
     
-    if serializer.is_valid(raise_exception=True):
+    if serializer.is_valid(raise_exception=False):
         serializer.save()     
         response = ResponseHelper.success(site_name, f"Site {site_name} is added successfully!")
         return Response(response, 202)
     else:
-        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add site, {site_name}."))
+        if (serializer.errors["name"]):            
+            err = serializer.errors["name"]
+            raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add site, {site_name}. " + err[0]))
+        else:            
+            raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add site, {site_name}."))
     
     
 @api_view(['GET'])
@@ -131,12 +135,15 @@ def edit_site(request):
     serializer = EditSiteSerializer(site, data=data)    
        
     if serializer.is_valid(raise_exception=False):
-        serializer.save()             
-        response = ResponseHelper.success(site.name, "Site has been successfully updated!") 
-            
-        return Response(response, status=202)
+        serializer.save()
+        response = ResponseHelper.success(site.name, "Site has been updated successfully!")
+        return Response(response, 202)
     else:
-        raise exceptions.ParseError(ResponseHelper.failed("Failed to update site."))
+        if (serializer.errors["name"]):            
+            err = serializer.errors["name"]
+            raise exceptions.ParseError(ResponseHelper.failed("Unable to update site. " + err[0]))
+        else:            
+            raise exceptions.ParseError(ResponseHelper.failed("Unable to update site."))
 
 
 

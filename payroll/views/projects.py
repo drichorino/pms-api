@@ -20,13 +20,16 @@ def add_project(request):
     
     serializer = ProjectSerializer(data=data)
     
-    if serializer.is_valid(raise_exception=True):
+    if serializer.is_valid(raise_exception=False):
         serializer.save()  
         response = ResponseHelper.success(data, f"Project {project_name} is added successfully!")
         return Response(response, 202)
-        
     else:
-        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project, {project_name}."))
+        if (serializer.errors["name"]):            
+            err = serializer.errors["name"]
+            raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project, {project_name}. " + err[0]))
+        else:            
+            raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project, {project_name}."))
 
 
 @api_view(['GET'])
@@ -137,10 +140,12 @@ def edit_project(request):
        
     if serializer.is_valid(raise_exception=False):
         serializer.save()
-        response = ResponseHelper.success(project.name, "Project has been successfully updated!")
-            
-        return Response(response, status=202)
+        response = ResponseHelper.success(project.name, "Project has been updated successfully!")
+        return Response(response, 202)
     else:
-        raise exceptions.ParseError(ResponseHelper.failed("Failed to update project."))
-
+        if (serializer.errors["name"]):            
+            err = serializer.errors["name"]
+            raise exceptions.ParseError(ResponseHelper.failed("Unable to update project. " + err[0]))
+        else:            
+            raise exceptions.ParseError(ResponseHelper.failed("Unable to update project."))
 
