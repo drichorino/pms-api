@@ -9,6 +9,9 @@ from datetime import datetime
 
 from helper.response_helper import ResponseHelper
 
+from django.utils import timezone
+
+
 @api_view(['POST'])
 # @authentication_classes([authentication.CustomUserAuthentication])
 # @permission_classes([permissions.IsAuthenticated])
@@ -29,12 +32,15 @@ def login(request):
     password = request.data["password"]
 
     user = services.user_email_selector(email=email)
-
+    
     if user is None:
         raise exceptions.AuthenticationFailed(ResponseHelper.failed("Invalid credentials."))
 
     if not user.check_password(raw_password=password):
         raise exceptions.AuthenticationFailed(ResponseHelper.failed("Invalid credentials."))
+
+    user.last_login = timezone.now()
+    user.save()
 
     token = services.create_token(user_id=user.id)
 
@@ -69,8 +75,7 @@ def list_users(request):
     serializer = user_serializer.UserSerializer(users, many=True)        
   
     # if there is something in items else raise error
-    if users:
-        
+    if users:        
         response = ResponseHelper.success(serializer.data, "Active users are retrieved successfully.")
         return Response(response)
         
@@ -89,12 +94,10 @@ def list_archived_users(request):
     serializer = user_serializer.UserSerializer(users, many=True)        
   
     # if there is something in items else raise error
-    if users:
-        
+    if users:        
         response = ResponseHelper.success(serializer.data, "Archived users are retrieved successfully.")
         return Response(response)
     else:
-
         raise exceptions.NotFound(ResponseHelper.failed("No archived users."))
   
 
@@ -106,23 +109,22 @@ def deactivate_user(request):
     
     data = request.data
         
-    user_email=data["email"]
+    email=data["email"]
    
-    to_delete = User.objects.filter(
-        is_active=True,
-        email=user_email
-    ).update(
-        is_active=False,
-        updated_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        deleted_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-    )
+    user = User.objects.get(email=email)
     
-    if to_delete:     
-        
-        response = ResponseHelper.success(user_email, f"User account with email, {user_email} is successfully deactivated.")
+    if user.is_active == False:
+        raise exceptions.ParseError(ResponseHelper.failed("User is already deactivated."))
+    
+    user.deleted_at = timezone.now()
+    user.is_active = False
+    
+    try:
+        user.save()
+        response = ResponseHelper.success(email, f"User account with email, {email}, is successfully deactivated.")
         return Response(response, 202)
     
-    else:
+    except:
         raise exceptions.ParseError(ResponseHelper.failed("Invalid argument."))
     
 
@@ -133,25 +135,24 @@ def restore_user(request):
     
     data = request.data
         
-    user_email=data["email"]
+    email=data["email"]
    
-    to_delete = User.objects.filter(
-        is_active=False,
-        email=user_email
-    ).update(
-        is_active=True,
-        updated_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        deleted_at = None
-    )
+    user = User.objects.get(email=email)
     
-    if to_delete:     
-        
-        response = ResponseHelper.success(user_email, f"User account with email, {user_email} is successfully activated.")
+    if user.is_active == True:
+        raise exceptions.ParseError(ResponseHelper.failed("User is already activated."))
+    
+    user.deleted_at = None
+    user.is_active = True
+    
+    try:
+        user.save()
+        response = ResponseHelper.success(email, f"User account with email, {email}, is successfully reactivated.")
         return Response(response, 202)
     
-    else:
+    except:
         raise exceptions.ParseError(ResponseHelper.failed("Invalid argument."))
-    
+
 
 @api_view(['POST'])
 @authentication_classes([authentication.CustomUserAuthentication])
@@ -160,7 +161,7 @@ def logout(request):
     
     
     resp = response.Response()
-    resp.delete_cookie(key="jwt")
+    resp.delete_cookie(key="pmsjwt")
     resp.data = {"message": "Successfully logged out."}
 
     return resp
@@ -172,39 +173,30 @@ def logout(request):
 def edit_user(request):
     
     data = request.data
-    
-    id=data["id"]    
-   
-    if data["password"] or data["confirm_password"]:
-        if data["password"] != data["confirm_password"]:
-            
-            raise exceptions.ParseError(ResponseHelper.failed("Passwords do not match."))    
-    
-        user = User.objects.filter(id=id).first()        
-        user.set_password(data["password"])
-        user.save()                     
-        
-    
-    to_update = User.objects.filter(
-        id=id
-    ).update(
-        email = data["email"],
-        first_name = data["first_name"],
-        last_name = data["last_name"],
-        is_staff = data["is_staff"],
-        is_superuser = data["is_superuser"],
-        is_active = data["is_active"],
-        updated_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-    )
-        
-  
-    if to_update:
-        
-        user = User.objects.filter(id=id).first()
-        serializer = user_serializer.UserSerializer(user)
 
+    id=data["id"]    
+    user = User.objects.get(id=id)   
+    
+    #update password if given
+    if data["password"] or data["confirm_password"]:
+        if data["password"] != data["confirm_password"]:            
+            raise exceptions.ParseError(ResponseHelper.failed("Passwords do not match."))  
+                   
+        user.set_password(data["password"])
+        user.save()        
+    
+    user.email = data["email"]
+    user.first_name = data["first_name"]
+    user.last_name = data["last_name"]
+    user.is_staff = data["is_staff"]
+    user.is_superuser = data["is_superuser"]
+    user.is_active = data["is_active"]
+  
+    try:
+        user.save()
+        updated_user = User.objects.get(id=id)
+        serializer = user_serializer.UserSerializer(updated_user)
         response = ResponseHelper.success(serializer.data, "User has been updated successfully!")
         return Response(response, 202)
-    else:
-        
+    except:        
         raise exceptions.ParseError(ResponseHelper.failed("Failed to update user."))
