@@ -10,6 +10,7 @@ urlpatterns = [
     path("sites/edit/", sites.edit_site, name='edit-site'),    
     path("sites/deactivate/", sites.deactivate_site, name='deactivate-sites'), 
     path("sites/restore/", sites.restore_site, name='restore-site'), 
+    path("sites/view/", sites.view_site, name='view-site'),
     
     ### PROJECTS ###
     path("projects/add/", projects.add_project, name='add-project'),

@@ -5,7 +5,7 @@ from rest_framework import exceptions, permissions
 from user import authentication
 
 from .. models import Site
-from .. serializers import SiteSerializer, EditSiteSerializer
+from .. serializers import SiteSerializer, EditSiteSerializer, ViewSiteSerializer
 
 from helper.response_helper import ResponseHelper
 
@@ -36,7 +36,7 @@ def add_site(request):
 @authentication_classes([authentication.CustomUserAuthentication])
 @permission_classes([permissions.IsAuthenticated])
 def list_sites(request):
-    
+
     sites = Site.objects.filter(is_active=True)
     serializer = SiteSerializer(sites, many=True)        
   
@@ -146,4 +146,25 @@ def edit_site(request):
             raise exceptions.ParseError(ResponseHelper.failed("Unable to update site."))
 
 
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def view_site(request):
+    
+    data = request.data
+    
+    id = data["id"]   
+    
+    site = Site.objects.filter(id=id).first()
+   
+    if site:   
+        serializer = ViewSiteSerializer(site)        
+        response = ResponseHelper.success(serializer.data, "Site has been retrieved successfully!")
+        return Response(response)
+    else:            
+        raise exceptions.ParseError(ResponseHelper.failed("Site not found."))
 
+    
+        
+    
+    
