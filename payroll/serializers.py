@@ -71,3 +71,12 @@ class EditProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['name']   
         read_only_fields = ['id'] 
+        
+        
+        
+##### VIEW SERIALIZERS #####
+
+class ViewSiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Site
+        fields = '__all__'
