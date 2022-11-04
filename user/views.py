@@ -159,12 +159,19 @@ def restore_user(request):
 @permission_classes([permissions.IsAuthenticated])
 def logout(request):
     
-    
     resp = response.Response()
-    resp.delete_cookie(key="pmsjwt")
-    resp.data = {"message": "Successfully logged out."}
-
-    return resp
+    
+    token = request.COOKIES.get("pmsjwt")
+    
+    if(token):
+        try:
+            resp.delete_cookie(key="pmsjwt", samesite='None')
+            resp.data = ResponseHelper.success("Logout", "Successfully logged out.")
+            return resp
+        except:
+            raise exceptions.ParseError(ResponseHelper.failed("Not logged in."))
+    else:
+        raise exceptions.ParseError(ResponseHelper.failed("Not logged in."))
 
 
 @api_view(['POST'])
