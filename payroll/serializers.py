@@ -80,3 +80,12 @@ class ViewSiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
         fields = '__all__'
+        
+        
+        
+##### GET SERIALIZERS #####
+
+class GetProjectsNotInSiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ['id', 'name']

@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework import exceptions, permissions
 from user import authentication
 
-from .. models import Site
-from .. serializers import SiteSerializer, EditSiteSerializer, ViewSiteSerializer
+from .. models import Site, Project
+from .. serializers import SiteSerializer, EditSiteSerializer, ViewSiteSerializer, GetProjectsNotInSiteSerializer, ProjectSerializer
 
 from helper.response_helper import ResponseHelper
 
@@ -155,16 +155,62 @@ def view_site(request):
     
     id = data["id"]   
     
-    site = Site.objects.filter(id=id).first()
-   
+    site = Site.objects.filter(id=id).first()   
+    
     if site:   
-        serializer = ViewSiteSerializer(site)        
-        response = ResponseHelper.success(serializer.data, "Site has been retrieved successfully!")
+        siteSerializer = ViewSiteSerializer(site)
+        siteData = siteSerializer.data       
+        
+        
+        #GET PROJECTS NOT IN SITE
+        if(siteData['projects']):        
+            projectsNotInSite = Project.objects.exclude(id__in=siteData['projects'])
+        else:
+            projectsNotInSite = Project.objects.all()
+        
+        projectsNotInSiteSerializer = GetProjectsNotInSiteSerializer(projectsNotInSite, many=True)
+        projectsNotInSiteData = projectsNotInSiteSerializer.data
+        
+        
+        #GET PROJECTS IN SITES
+        if(siteData['projects']):        
+            projectsInSite = Project.objects.filter(id__in=siteData['projects'])
+        else:
+            projectsInSite = Project.objects.all()
+        
+        projectsInSiteSerializer = ProjectSerializer(projectsInSite, many=True)
+        projectsInSiteData = projectsInSiteSerializer.data
+        
+                    
+        responseObject = { "site" : siteData, "projects_not_in_site" : projectsNotInSiteData, "projects_in_site" : projectsInSiteData }
+        
+        response = ResponseHelper.success(responseObject, "Site has been retrieved successfully!")
         return Response(response)
     else:            
         raise exceptions.ParseError(ResponseHelper.failed("Site not found."))
-
     
-        
     
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def add_project_to_site(request):
+    
+    data = request.data
+    
+    id = data['id']
+    projects_to_add = data['projects_to_add']
+    
+    site = Site.objects.filter(id=id).first()    
+    
+    if site.projects:
+        (site.projects).extend(projects_to_add)
+    else:    
+        site.projects = projects_to_add
+    
+    try: 
+        site.save()
+        response = ResponseHelper.success(id, f"Project(s) has been added to {site}.")
+        return Response(response)
+    except:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project(s) to {site}."))
     

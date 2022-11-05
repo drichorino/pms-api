@@ -12,6 +12,8 @@ urlpatterns = [
     path("sites/restore/", sites.restore_site, name='restore-site'), 
     path("sites/view/", sites.view_site, name='view-site'),
     
+    path("sites/add-project/", sites.add_project_to_site, name='add-project-to-site'),
+    
     ### PROJECTS ###
     path("projects/add/", projects.add_project, name='add-project'),
     path("projects/list/", projects.list_projects, name='list-projects'),
