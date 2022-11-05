@@ -176,7 +176,7 @@ def view_site(request):
         if(siteData['projects']):        
             projectsInSite = Project.objects.filter(id__in=siteData['projects'])
         else:
-            projectsInSite = Project.objects.all()
+            projectsInSite =[]
         
         projectsInSiteSerializer = ProjectSerializer(projectsInSite, many=True)
         projectsInSiteData = projectsInSiteSerializer.data
