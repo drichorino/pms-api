@@ -67,7 +67,7 @@ def user_email_selector(email: str) -> "User":
 def create_token(user_id: int) -> str:
     payload = dict(
         id=user_id,
-        exp=datetime.datetime.utcnow() + datetime.timedelta(hours=2),
+        exp=datetime.datetime.utcnow() + datetime.timedelta(hours=12),
         iat=datetime.datetime.utcnow(),
     )
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
