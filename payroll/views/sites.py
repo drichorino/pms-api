@@ -13,6 +13,8 @@ from django.utils import timezone
 
 
 @api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
 def add_site(request):
     
     data=request.data

@@ -13,6 +13,8 @@ from helper.response_helper import ResponseHelper
 
 
 @api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
 def add_project(request):
     
     data = request.data

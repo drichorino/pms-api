@@ -13,8 +13,8 @@ from django.utils import timezone
 
 
 @api_view(['POST'])
-# @authentication_classes([authentication.CustomUserAuthentication])
-# @permission_classes([permissions.IsAuthenticated])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
 def add_users(request):
     serializer = user_serializer.UserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
