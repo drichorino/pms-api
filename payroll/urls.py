@@ -13,6 +13,7 @@ urlpatterns = [
     path("sites/view/", sites.view_site, name='view-site'),
     
     path("sites/add-project/", sites.add_project_to_site, name='add-project-to-site'),
+    path("sites/unassign-project/", sites.unassign_project, name='unassign-project-from-site'),
     
     ### PROJECTS ###
     path("projects/add/", projects.add_project, name='add-project'),

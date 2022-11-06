@@ -200,7 +200,7 @@ def add_project_to_site(request):
     id = data['id']
     projects_to_add = data['projects_to_add']
     
-    site = Site.objects.filter(id=id).first()    
+    site = Site.objects.filter(id=id).first()
     
     if site.projects:
         (site.projects).extend(projects_to_add)
@@ -214,3 +214,23 @@ def add_project_to_site(request):
     except:
         raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add project(s) to {site}."))
     
+    
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def unassign_project(request):
+    
+    data = request.data
+    
+    site_id = data['site_id']
+    project_id = data['project_id']
+       
+    site = Site.objects.filter(id=site_id).first()    
+
+    try: 
+        (site.projects).remove(project_id)
+        site.save()
+        response = ResponseHelper.success(project_id, f"Project(s) has been unassigned from {site}.")
+        return Response(response)
+    except:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to unassign project(s) from {site}."))
