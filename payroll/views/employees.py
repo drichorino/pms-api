@@ -13,7 +13,7 @@ from django.utils import timezone
 
 
 @api_view(['POST'])
-def add_site(request):
+def add_employee(request):
     
     data=request.data
 
