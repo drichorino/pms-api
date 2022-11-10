@@ -14,8 +14,7 @@ class SiteSerializer(serializers.ModelSerializer):
         model = Site
         fields = '__all__'
         read_only_fields = ['id']
-        
-     
+             
         
 class ProjectSerializer(serializers.ModelSerializer):
     name = serializers.CharField(
@@ -49,7 +48,6 @@ class DailyTimeRecordSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']    
         
         
-        
 ##### EDIT SERIALIZERS #####       
         
 class EditSiteSerializer(serializers.ModelSerializer):
@@ -73,7 +71,6 @@ class EditProjectSerializer(serializers.ModelSerializer):
         read_only_fields = ['id'] 
         
         
-        
 ##### VIEW SERIALIZERS #####
 
 class ViewSiteSerializer(serializers.ModelSerializer):
@@ -82,10 +79,13 @@ class ViewSiteSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
         
-        
 ##### GET SERIALIZERS #####
 
 class GetProjectsNotInSiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name']
+        
+        
+##### DELETE SERIALIZERS #####
+
