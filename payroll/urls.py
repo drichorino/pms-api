@@ -25,6 +25,10 @@ urlpatterns = [
     
     ### EMPLOYEES ###
     path("employees/add/", employees.add_employee, name='add-employee'),
+    path("employees/list/", employees.list_employees, name='list-employees'),
+    path("employees/archive/", employees.list_archived_employees, name='list-archived-employees'),
+    path("employees/deactivate/", employees.deactivate_employee, name='deactivate-employee'),
+    path("employees/restore/", employees.restore_employee, name='restore-employee'),
     
     
     
