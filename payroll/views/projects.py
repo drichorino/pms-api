@@ -80,11 +80,13 @@ def deactivate_project(request):
     if project.is_active == False:
         raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already deactivated."))
     
-    data["name"] = project.name
-    data["deleted_at"] = timezone.now()
-    data["is_active"] = False
+    serializer = ProjectSerializer(project)
+    serializedProject = serializer.data
+    
+    serializedProject["deleted_at"] = timezone.now()
+    serializedProject["is_active"] = False
 
-    serializer = ProjectSerializer(project, data=data)    
+    serializer = ProjectSerializer(project, data=serializedProject)
        
     if serializer.is_valid(raise_exception=False):
         serializer.save()             
@@ -109,11 +111,13 @@ def restore_project(request):
     if project.is_active == True:
         raise exceptions.ParseError(ResponseHelper.failed(f"Project {project.name} cannot be found or is already reactivated."))
     
-    data["name"] = project.name
-    data["deleted_at"] = None
-    data["is_active"] = True
+    serializer = ProjectSerializer(project)
+    serializedProject = serializer.data
+    
+    serializedProject["deleted_at"] = None
+    serializedProject["is_active"] = True
 
-    serializer = ProjectSerializer(project, data=data)    
+    serializer = ProjectSerializer(project, data=serializedProject)    
        
     if serializer.is_valid(raise_exception=False):
         serializer.save()             

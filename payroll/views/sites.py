@@ -76,11 +76,13 @@ def deactivate_site(request):
     if site.is_active == False:
         raise exceptions.ParseError(ResponseHelper.failed(f"Site {site.name} cannot be found or is already deactivated."))
     
-    data["name"] = site.name
-    data["deleted_at"] = timezone.now()
-    data["is_active"] = False
+    serializer = SiteSerializer(site)
+    serializedSite = serializer.data
+    
+    serializedSite["deleted_at"] = timezone.now()
+    serializedSite["is_active"] = False
 
-    serializer = SiteSerializer(site, data=data)    
+    serializer = SiteSerializer(site, data=serializedSite)
        
     if serializer.is_valid(raise_exception=False):
         serializer.save()             
@@ -105,11 +107,13 @@ def restore_site(request):
     if site.is_active == True:
         raise exceptions.ParseError(ResponseHelper.failed(f"Site {site.name} cannot be found or is already activated."))
     
-    data["name"] = site.name
-    data["deleted_at"] = None
-    data["is_active"] = True
+    serializer = SiteSerializer(site)
+    serializedSite = serializer.data
+    
+    serializedSite["deleted_at"] = None
+    serializedSite["is_active"] = True
 
-    serializer = SiteSerializer(site, data=data)    
+    serializer = SiteSerializer(site, data=serializedSite)  
        
     if serializer.is_valid(raise_exception=False):
         serializer.save()             
