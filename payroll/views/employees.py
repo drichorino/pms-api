@@ -5,7 +5,7 @@ from rest_framework import exceptions, permissions
 from user import authentication
 
 from .. models import Employee
-from .. serializers import EmployeeSerializer
+from .. serializers import EmployeeSerializer, EditEmployeeSerializer
 
 from helper.response_helper import ResponseHelper
 
@@ -13,21 +13,19 @@ from django.utils import timezone
 
 
 @api_view(['POST'])
-def add_employee(request):
-    
-    data=request.data
+def add_employee(request):    
     
     data=request.data
     employee_name = data["name"]
     
     serializer = EmployeeSerializer(data=data)    
     
-    if serializer.is_valid(raise_exception=True):
+    if serializer.is_valid(raise_exception=False):
         serializer.save()     
         response = ResponseHelper.success(employee_name, f"Employee {employee_name} is added successfully!")
         return Response(response, 202)
-    else:
-        if (serializer.errors):            
+    else:        
+        if (serializer.errors):
             raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add employee, {employee_name}."))
         else:            
             raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add employee, {employee_name}."))
@@ -121,3 +119,31 @@ def restore_employee(request):
         return Response(response, status=202)    
     else:
         raise exceptions.ParseError(ResponseHelper.failed(f"Employee {employee.name} cannot be found or is already activated."))
+    
+    
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def edit_employee(request):
+    
+    data = request.data
+        
+    id = data["id"]
+    employee_name = data["name"]
+    
+    employee = Employee.objects.get(id=id)
+    
+    if employee.is_active == False:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Employee {employee.name} is not active."))
+
+    serializer = EditEmployeeSerializer(employee, data=data)    
+       
+    if serializer.is_valid(raise_exception=False):
+        serializer.save()
+        response = ResponseHelper.success(serializer.data, "Employee has been updated successfully!")
+        return Response(response, 202)
+    else:
+        if (serializer.errors):
+            raise exceptions.ParseError(ResponseHelper.failed(f"Unable to update employee, {employee_name}."))
+        else:            
+            raise exceptions.ParseError(ResponseHelper.failed(f"Unable to update employee., {employee_name}"))

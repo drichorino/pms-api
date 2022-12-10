@@ -136,6 +136,7 @@ def edit_project(request):
     data = request.data
         
     id = data["id"]
+    print(data)
     
     project = Project.objects.get(id=id)
     

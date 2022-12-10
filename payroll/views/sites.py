@@ -70,7 +70,7 @@ def deactivate_site(request):
     data = request.data
         
     id = data["id"]
-    
+
     site = Site.objects.get(id=id)
     
     if site.is_active == False:
@@ -90,6 +90,7 @@ def deactivate_site(request):
             
         return Response(response, status=202)    
     else:
+        print(serializer.errors)
         raise exceptions.ParseError(ResponseHelper.failed(f"Site {site.name} cannot be found or is already deactivated."))  
     
     
@@ -170,7 +171,7 @@ def view_site(request):
         
         #GET PROJECTS NOT IN SITE
         if(siteData['projects']):        
-            projectsNotInSite = Project.objects.exclude(id__in=siteData['projects'])
+            projectsNotInSite = Project.objects.filter(is_active=True).exclude(id__in=siteData['projects'])
         else:
             projectsNotInSite = Project.objects.all()
         
@@ -180,7 +181,7 @@ def view_site(request):
         
         #GET PROJECTS IN SITES
         if(siteData['projects']):        
-            projectsInSite = Project.objects.filter(id__in=siteData['projects'])
+            projectsInSite = Project.objects.filter(id__in=siteData['projects'], is_active=True)
         else:
             projectsInSite =[]
         

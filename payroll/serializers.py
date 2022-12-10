@@ -3,8 +3,6 @@ from .models import Site, Project, Employee, Payslip, DailyTimeRecord
 from rest_framework.validators import UniqueValidator
 
 
-
-
 class SiteSerializer(serializers.ModelSerializer):
     name = serializers.CharField(
         max_length=100,
@@ -32,6 +30,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         fields = '__all__'
         read_only_fields = ['id']
+        extra_kwargs = {'phone_number': {'allow_blank': True}} 
         
         
 class PayslipSerializer(serializers.ModelSerializer):
@@ -67,8 +66,16 @@ class EditProjectSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = Project
-        fields = ['name']   
-        read_only_fields = ['id'] 
+        fields = '__all__'  
+        read_only_fields = ['id']
+        
+        
+class EditEmployeeSerializer(serializers.ModelSerializer):     
+    class Meta:
+        model = Employee
+        fields = '__all__'
+        read_only_fields = ['id']
+        extra_kwargs = {'phone_number': {'allow_blank': True}}
         
         
 ##### VIEW SERIALIZERS #####
