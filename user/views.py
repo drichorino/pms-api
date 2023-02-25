@@ -46,8 +46,8 @@ def login(request):
 
     resp = response.Response()
 
-    #resp.set_cookie(key="pmsjwt", value=token, httponly=True, samesite='None', secure='False')
-    resp.set_cookie(key="pmsjwt", value=token, httponly=True)
+    resp.set_cookie(key="pmsjwt", value=token, httponly=True, samesite='None', secure='False')
+    #resp.set_cookie(key="pmsjwt", value=token, httponly=True)
     resp.data = {"message": "Successfully logged in."}
 
     return resp
