@@ -4,8 +4,9 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework import exceptions, permissions
 from user import authentication
 
-from .. models import Site, Project
-from .. serializers import SiteSerializer, EditSiteSerializer, ViewSiteSerializer, GetProjectsNotInSiteSerializer, ProjectSerializer
+from .. models import Site, Project, Employee
+from .. serializers import SiteSerializer, EditSiteSerializer, ViewSiteSerializer, GetProjectsNotInSiteSerializer, \
+    ProjectSerializer, EmployeeSerializer
 
 from helper.response_helper import ResponseHelper
 
@@ -166,8 +167,8 @@ def view_site(request):
     
     if site:   
         siteSerializer = ViewSiteSerializer(site)
-        siteData = siteSerializer.data       
-        
+        siteData = siteSerializer.data
+               
         
         #GET PROJECTS NOT IN SITE
         if(siteData['projects']):        
@@ -188,8 +189,33 @@ def view_site(request):
         projectsInSiteSerializer = ProjectSerializer(projectsInSite, many=True)
         projectsInSiteData = projectsInSiteSerializer.data
         
-                    
-        responseObject = { "site" : siteData, "projects_not_in_site" : projectsNotInSiteData, "projects_in_site" : projectsInSiteData }
+        
+        #GET EMPLOYEES NOT IN SITE
+        if(siteData['employees']):        
+            employeesNotInSite = Employee.objects.filter(is_active=True).exclude(id__in=siteData['employees'])
+        else:
+            employeesNotInSite = Employee.objects.all()
+        
+        employeesNotInSiteSerializer = GetProjectsNotInSiteSerializer(employeesNotInSite, many=True)
+        employeesNotInSiteData = employeesNotInSiteSerializer.data
+        
+        
+        #GET EMPLOYEES IN PROJECT IN SITES
+        if(siteData['employees']):        
+            employeesInSite = Employee.objects.filter(id__in=siteData['employees'], is_active=True)
+        else:
+            employeesInSite =[]
+        
+        employeesInSiteSerializer = EmployeeSerializer(employeesInSite, many=True)
+        employeesInSiteData = employeesInSiteSerializer.data        
+                   
+        responseObject = { 
+            "site" : siteData,
+            "projects_not_in_site" : projectsNotInSiteData,
+            "projects_in_site" : projectsInSiteData,
+            "employees_not_in_site" : employeesNotInSiteData,
+            "employees_in_site" : employeesInSiteData
+        }
         
         response = ResponseHelper.success(responseObject, "Site has been retrieved successfully!")
         return Response(response)
@@ -200,19 +226,19 @@ def view_site(request):
 @api_view(['POST'])
 @authentication_classes([authentication.CustomUserAuthentication])
 @permission_classes([permissions.IsAuthenticated])
-def add_project_to_site(request):
+def assign_project_to_site(request):
     
     data = request.data
     
     id = data['id']
-    projects_to_add = data['projects_to_add']
+    projects_to_assign = data['projects_to_assign']
     
     site = Site.objects.filter(id=id).first()
     
     if site.projects:
-        (site.projects).extend(projects_to_add)
+        (site.projects).extend(projects_to_assign)
     else:    
-        site.projects = projects_to_add
+        site.projects = projects_to_assign
     
     try: 
         site.save()
@@ -241,3 +267,49 @@ def unassign_project(request):
         return Response(response)
     except:
         raise exceptions.ParseError(ResponseHelper.failed(f"Unable to unassign project(s) from {site}."))
+    
+    
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def assign_employee_to_site(request):
+    
+    data = request.data
+    
+    id = data['id']
+    employees_to_assign = data['employees_to_assign']
+    
+    site = Site.objects.filter(id=id).first()
+    
+    if site.employees:
+        (site.employees).extend(employees_to_assign)
+    else:    
+        site.employees = employees_to_assign
+    
+    try: 
+        site.save()
+        response = ResponseHelper.success(id, f"Employee(s) has been added to {site}.")
+        return Response(response)
+    except:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to add employee(s) to {site}."))
+    
+    
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def unassign_employee(request):
+    
+    data = request.data
+    
+    site_id = data['site_id']
+    employee_id = data['employee_id']
+       
+    site = Site.objects.filter(id=site_id).first()    
+
+    try: 
+        (site.employees).remove(employee_id)
+        site.save()
+        response = ResponseHelper.success(employee_id, f"Employee(s) has been unassigned from {site}.")
+        return Response(response)
+    except:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to unassign employee(s) from {site}."))
