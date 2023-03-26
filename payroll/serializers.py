@@ -93,6 +93,11 @@ class GetProjectsNotInSiteSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['id', 'name']
         
+
+class GetEmployeesNotInSiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ['id', 'name']
         
 ##### DELETE SERIALIZERS #####
 
