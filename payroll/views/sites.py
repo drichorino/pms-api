@@ -313,3 +313,24 @@ def unassign_employee(request):
         return Response(response)
     except:
         raise exceptions.ParseError(ResponseHelper.failed(f"Unable to unassign employee(s) from {site}."))
+    
+    
+@api_view(['POST'])
+@authentication_classes([authentication.CustomUserAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def deploy_employee_to_project(request):
+    
+    data = request.data
+    
+    employee_id = data['employee_id']
+    projects_selected = data['projects_selected']
+       
+    site = Site.objects.filter(id=employee_id).first()    
+
+    try: 
+        (site.employees).remove(employee_id)
+        site.save()
+        response = ResponseHelper.success(employee_id, f"Employee(s) has been unassigned from {site}.")
+        return Response(response)
+    except:
+        raise exceptions.ParseError(ResponseHelper.failed(f"Unable to unassign employee(s) from {site}."))
